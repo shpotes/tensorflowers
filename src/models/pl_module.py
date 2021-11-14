@@ -5,6 +5,7 @@ import torch.nn as nn
 import pytorch_lightning as pl 
 
 from einops import rearrange
+from src.evaluation.pytorch import CrossEntropyMetric
 
 def _get_latent_size(backbone: nn.Module, input_size: torch.Tensor) -> int:
     batch_size = input_size[0]
@@ -24,6 +25,9 @@ class HydraModule(pl.LightningModule):
 
         self.lr = lr
         latent_size = _get_latent_size(backbone, input_size)
+
+        self.train_metric = CrossEntropyMetric()
+        self.val_metric = CrossEntropyMetric()
         
         self.feature_extraction = backbone
         self.classification_head = nn.Sequential(
@@ -88,19 +92,27 @@ class HydraModule(pl.LightningModule):
 
         loss = self.clf_criterion(clf_logits, clf_targets.float())
 
-        return loss
+        return loss, clf_logits
 
     def training_step(self, batch, _) -> float:
-        train_loss = self._common_step(batch)
+        train_loss, clf_logits = self._common_step(batch)
+        train_ce_loss = self.train_metric(
+            batch["target"].float(), clf_logits
+        )
 
         self.log("train_bce_loss", train_loss)
+        self.log("train_ce", train_ce_loss)
 
         return train_loss
 
     def validation_step(self, batch, _):
-        val_loss = self._common_step(batch)
+        val_loss, clf_logits = self._common_step(batch)
+        val_ce_loss = self.val_metric(
+            batch["target"].float(), clf_logits
+        )
 
         self.log("val_bce_loss", val_loss)
+        self.log("val_ce", val_ce_loss)
 
 
     def configure_optimizers(self):

@@ -2,7 +2,7 @@ import torch.nn as nn
 import pytorch_lightning as pl
 from torchvision import models
 from torchvision import transforms
-
+from pytorch_lightning.loggers import WandbLogger
 from src.dataset import TFColDataModule
 from src.models.pl_module import HydraModule
 
@@ -24,5 +24,14 @@ model = HydraModule(
     lr=3e-4,
 )
 
-trainer = pl.Trainer(overfit_batches=10)
+logger = WandbLogger(
+    project="challenge", 
+    name="baseline",
+    entity="tensorflowers",
+)
+trainer = pl.Trainer(
+    max_epochs=10,
+    gpus=1,
+    logger=logger    
+)
 trainer.fit(model, dm)

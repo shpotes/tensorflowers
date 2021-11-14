@@ -5,8 +5,7 @@ from torch import Tensor
 from torchmetrics.metric import Metric
 from torchmetrics.utilities.checks import _check_same_shape
 from torchmetrics.utilities.data import dim_zero_cat
-from torch import functional as F
-
+from torch.nn import functional as F
 
 def _cross_entropy_update(
     targets: Tensor, 
@@ -19,11 +18,10 @@ def _cross_entropy_update(
         logits: softmaxed model logits ``[N, d]``
     """
     _check_same_shape(targets, logits)
-    if targets.ndim != 2 or q.dim != 2:
+    if targets.ndim != 2 or logits.ndim != 2:
         raise ValueError(f"Expected both targets and logits to be 2D but got {targets.ndim} and {logits.ndim} respectively")
 
     total = targets.shape[0]
-    reduction_fn = lambda x: x
 
     measure = -torch.sum(F.log_softmax(logits, dim=1) * targets, dim=1)
 
@@ -48,7 +46,7 @@ class CrossEntropyMetric(Metric):
         self, 
         reduction: Optional[str] = "mean",
         compute_on_step: bool = True, 
-        dist_sync_on_step: bool = False, 
+        dist_sync_on_step: bool = False,
         process_group: Optional[Any] = None, 
         dist_sync_fn: Callable = None
     ) -> None:

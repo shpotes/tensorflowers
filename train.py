@@ -35,3 +35,4 @@ trainer = pl.Trainer(
     logger=logger    
 )
 trainer.fit(model, dm)
+trainer.save_checkpoint("weights/baseline.ckpt")

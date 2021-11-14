@@ -28,11 +28,17 @@ class TFColDataset(data.Dataset):
             'lat': info_dict['lat'],
             'lon': info_dict['lon'],
         }
-
+        if metadata['lat'] < 6:
+            city =  'Bogotá'
+        elif metadata['lat'] < 6.5:
+            city = 'Medellín'
+        else:
+            city = 'Bucaramanga'
         return {
             "input": self.image_transforms(image),
             "metadata": metadata,
-            "target": self.target_transforms(info_dict['labels'])
+            "target": self.target_transforms(info_dict['labels']),
+            "city": city
         }
 
 class TFColDataModule(pl.LightningDataModule):

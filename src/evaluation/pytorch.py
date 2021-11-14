@@ -67,7 +67,7 @@ class CrossEntropyMetric(Metric):
         if self.reduction == "mean":
             self.add_state("measures", torch.zeros(1), dist_reduce_fx="sum")
         else:
-            self.add_state("measure", torch.zeros(1), dist_reduce_fx="cat")
+            self.add_state("measure", [], dist_reduce_fx="cat")
 
         self.add_state("total", torch.zeros(1), dist_reduce_fx="sum")
 

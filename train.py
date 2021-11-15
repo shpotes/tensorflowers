@@ -7,7 +7,7 @@ from pytorch_lightning.loggers import WandbLogger
 from src.dataset import TFColDataModule
 from src.models.pl_module import HydraModule
 
-def train():
+def train(experiment_name):
     dm = TFColDataModule(
         image_transforms=transforms.Compose([
             transforms.Resize(224),
@@ -26,18 +26,19 @@ def train():
         lr=3e-4,
     )
 
-    logger = WandbLogger(
-        project="challenge", 
-        name="baseline",
-        entity="tensorflowers",
-    )
+    #logger = WandbLogger(
+    #    project="challenge", 
+    #    name=experiment_name,
+    #    entity="tensorflowers",
+    #)
     trainer = pl.Trainer(
-        max_epochs=10,
+        max_epochs=100,
         gpus=1,
-        logger=logger    
+        overfit_batches=1,
+        #logger=logger
     )
     trainer.fit(model, dm)
-    trainer.save_checkpoint("weights/baseline.ckpt")
+    #trainer.save_checkpoint(f"weights/{experiment_name}.ckpt")
 
 if __name__ == '__main__':
-    train()
+    train("multi-head")

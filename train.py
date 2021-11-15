@@ -8,9 +8,6 @@ from src.dataset import TFColDataModule
 from src.models.pl_module import HydraModule
 
 def train():
-    torch.cuda.set_per_process_memory_fraction(0.8, 0)
-    torch.cuda.empty_cache()
-
     dm = TFColDataModule(
         image_transforms=transforms.Compose([
             transforms.Resize(224),
@@ -23,7 +20,6 @@ def train():
     )
 
     base_backbone = models.resnet18(pretrained=True)
-    base_backbone_dropout = nn.Dropout(p=0.7)(base_backbone)
     backbone = nn.Sequential(*list(base_backbone.children())[:-1])
     model = HydraModule(
         backbone,
@@ -32,7 +28,7 @@ def train():
 
     logger = WandbLogger(
         project="challenge", 
-        name="baseline_for_EA",
+        name="baseline",
         entity="tensorflowers",
     )
     trainer = pl.Trainer(

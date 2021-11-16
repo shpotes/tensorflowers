@@ -1,6 +1,6 @@
 from typing import Callable, Tuple, Optional
 
-import timm
+import timm.loss
 import torch
 import torch.nn as nn
 import pytorch_lightning as pl 

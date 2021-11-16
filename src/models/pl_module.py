@@ -96,7 +96,10 @@ class HydraModule(pl.LightningModule):
         clf_loss = output_dict["clf_loss"]
         loss = city_loss + self.clf_weight(batch_id) * clf_loss
 
-        train_cross_entropy = self.train_metric(output_dict["clf_logits"], batch["target"].float())
+        train_cross_entropy = self.train_metric(
+            output_dict["clf_logits"], 
+            batch["target"].float()
+        )
 
         self.log("train_cross_entropy_loss", train_cross_entropy, prog_bar=True)
         self.log(

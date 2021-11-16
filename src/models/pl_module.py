@@ -1,4 +1,4 @@
-from typing import Callable, Tuple
+from typing import Callable, Tuple, Optional
 
 import timm
 import torch
@@ -23,7 +23,8 @@ class HydraModule(pl.LightningModule):
         lr: float = 1e-3,
         clf_weight: Callable = lambda pos: 1,
         clf_loss: str = "bce",
-        input_size: Tuple[int] = (1, 3, 224, 224)
+        input_size: Tuple[int] = (1, 3, 224, 224),
+        class_weight: Optional[torch.Tensor] = None,
     ):
         super().__init__()
 
@@ -45,7 +46,8 @@ class HydraModule(pl.LightningModule):
         self.city_criterion = nn.CrossEntropyLoss()
 
         if clf_loss == "bce":
-            self.clf_criterion = nn.BCEWithLogitsLoss()
+            if class_weight is not None:
+                self.clf_criterion = nn.BCEWithLogitsLoss(weight=class_weight)
         if clf_loss == "asl":
             self.clf_criterion = timm.loss.AsymmetricLossMultiLabel()
         if clf_loss == "ce":
@@ -63,7 +65,7 @@ class HydraModule(pl.LightningModule):
 
     def forward(self, x):
         latent = self.feature_extraction(x)
-        latent = rearrange(latent, "b f w h -> b (f w h)")
+        latent = rearrange(latent, "b ... -> b (...)")
 
         clf_logits = self.classification_head(latent)
         city_logits = self.city_head(latent)

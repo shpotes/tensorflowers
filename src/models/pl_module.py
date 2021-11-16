@@ -1,11 +1,13 @@
 from typing import Callable, Tuple
 
+import timm
 import torch
 import torch.nn as nn
 import pytorch_lightning as pl 
 
 from einops import rearrange
 from src.evaluation.pytorch import CrossEntropyMetric
+from src.loss.cross_entropy import SparseCrossEntropyLoss
 
 def _get_latent_size(backbone: nn.Module, input_size: torch.Tensor) -> int:
     batch_size = input_size[0]
@@ -20,6 +22,7 @@ class HydraModule(pl.LightningModule):
         backbone: nn.Module,
         lr: float = 1e-3,
         clf_weight: Callable = lambda pos: 1,
+        clf_loss: str = "bce",
         input_size: Tuple[int] = (1, 3, 224, 224)
     ):
         super().__init__()
@@ -39,8 +42,14 @@ class HydraModule(pl.LightningModule):
             nn.Linear(256, 20),
         )
 
-        self.clf_criterion = nn.BCEWithLogitsLoss()
         self.city_criterion = nn.CrossEntropyLoss()
+
+        if clf_loss == "bce":
+            self.clf_criterion = nn.BCEWithLogitsLoss()
+        if clf_loss == "asl":
+            self.clf_criterion = timm.loss.AsymmetricLossMultiLabel()
+        if clf_loss == "ce":
+            self.clf_criterion = SparseCrossEntropyLoss()
 
         self.clf_weight = clf_weight
 

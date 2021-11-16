@@ -7,17 +7,17 @@ from torchmetrics.utilities.checks import _check_same_shape
 from torchmetrics.utilities.data import dim_zero_cat
 from torch.nn import functional as F
 
-def _cross_entropy_update(
-    targets: Tensor, 
+def _cross_entropy_update( 
     logits: Tensor, 
+    targets: Tensor,
 ) -> Tuple[Tensor, int]:
     """Updates and returns cross entropy scores for each observation and the total number of observations. 
     Checks same shape and 2D nature of the input tensors else raises ValueError.
     Args:
-        targets: one hot - target tensors with shape ``[N, d]``
         logits: softmaxed model logits ``[N, d]``
+        targets: one hot - target tensors with shape ``[N, d]``
     """
-    _check_same_shape(targets, logits)
+    _check_same_shape(logits, targets)
     if targets.ndim != 2 or logits.ndim != 2:
         raise ValueError(f"Expected both targets and logits to be 2D but got {targets.ndim} and {logits.ndim} respectively")
 
@@ -71,8 +71,8 @@ class CrossEntropyMetric(Metric):
 
         self.add_state("total", torch.zeros(1), dist_reduce_fx="sum")
 
-    def update(self, targets: Tensor, logits: Tensor) -> None:
-        measures, total = _cross_entropy_update(targets, logits)
+    def update(self, logits: Tensor, targets: Tensor) -> None:
+        measures, total = _cross_entropy_update(logits, targets)
 
         if self.reduction is None or self.reduction == "none":
             self.measure.append(measures)

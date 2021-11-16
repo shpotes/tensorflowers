@@ -46,8 +46,7 @@ class HydraModule(pl.LightningModule):
         self.city_criterion = nn.CrossEntropyLoss()
 
         if clf_loss == "bce":
-            if class_weight is not None:
-                self.clf_criterion = nn.BCEWithLogitsLoss(weight=class_weight)
+            self.clf_criterion = nn.BCEWithLogitsLoss(weight=class_weight)
         if clf_loss == "asl":
             self.clf_criterion = timm.loss.AsymmetricLossMultiLabel()
         if clf_loss == "ce":
@@ -105,7 +104,8 @@ class HydraModule(pl.LightningModule):
 
         city_loss = output_dict["city_loss"]
         clf_loss = output_dict["clf_loss"]
-        loss = city_loss + self.clf_weight(batch_id) * clf_loss
+        lamb = self.clf_weight(batch_id)
+        loss = (city_loss + lamb * clf_loss) / (lamb + 1)
 
         train_cross_entropy = self.train_metric(
             output_dict["clf_logits"], 

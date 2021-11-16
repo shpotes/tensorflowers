@@ -2,7 +2,7 @@ from datasets import load_dataset
 import pytorch_lightning as pl
 from torch.utils import data
 import torch
-from torchvision.transforms import ToTensor
+from torchvision.transforms import Compose, Resize, Normalize, ToTensor
 from PIL import Image
 
 def to_one_hot_encoding(label, max_classes=20):
@@ -14,6 +14,8 @@ class TFColDataset(data.Dataset):
     def __init__(self, split, image_transforms, target_transforms):
         self.ds = load_dataset('shpotes/tfcol')[split]
 
+        self.split = split
+
         self.image_transforms = image_transforms
         self.target_transforms = target_transforms
 
@@ -23,6 +25,11 @@ class TFColDataset(data.Dataset):
     def __getitem__(self, index):
         info_dict = self.ds[index]
         image = Image.open(info_dict['image']).convert("RGB")
+
+        if self.split == "test":
+            return {
+                "input": self.image_transforms(image)
+            }
 
         metadata = {
             'lat': info_dict['lat'],
@@ -73,6 +80,19 @@ class TFColDataModule(pl.LightningDataModule):
             self.target_transforms
         )
 
+        self.test_dataset = TFColDataset(
+            split="test",
+            image_transforms=Compose([
+                Resize((224, 224)),
+                ToTensor(),
+                Normalize(
+                    mean=[0.485, 0.456, 0.406],
+                    std=[0.229, 0.224, 0.225]
+                )
+            ]),
+            target_transforms=None
+        )
+
     def train_dataloader(self):
         return data.DataLoader(
             self.train_dataset, 
@@ -90,4 +110,10 @@ class TFColDataModule(pl.LightningDataModule):
             num_workers=self.num_workers,
         )
 
-
+    def test_dataloader(self):
+        return data.DataLoader(
+            self.test_dataset,
+            batch_size=self.batch_size,
+            pin_memory=True,
+            num_workers=self.num_workers,
+        )

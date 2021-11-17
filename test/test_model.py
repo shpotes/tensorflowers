@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import pytorch_lightning as pl
 
-from src.dataset.pl_datamodule import DummyDataset
+from src.data.pl_datamodule import DummyDataset
 from src.model import HydraModule
 
 def test_forward_pass():

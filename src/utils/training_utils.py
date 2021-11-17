@@ -3,6 +3,17 @@ import requests
 import torch.nn as nn
 import timm
 
+def turn_off_bn(model):
+    for child in model.children():
+        if isinstance(child, nn.BatchNorm2d) or isinstance(child, nn.LayerNorm):
+            child.requires_grad = False
+        else:
+            turn_off_bn(child)
+
+def freeze_params(backbone):
+    for child in backbone.children():
+        child.requires_grad = False
+
 def load_backbone(
     model_name: str,
     pretrained: bool = False,
@@ -33,4 +44,4 @@ def load_backbone(
     backbone = nn.Sequential(*list(base_backbone.children())[:-1])
 
     return backbone
-    
+

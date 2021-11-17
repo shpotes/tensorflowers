@@ -36,11 +36,12 @@ class TFColDataset(data.Dataset):
             'lon': info_dict['lon'],
         }
         if metadata['lat'] < 6:
-            city =  'Bogotá'
+            city =  0 # Bogota
         elif metadata['lat'] < 6.5:
-            city = 'Medellín'
+            city = 1 # Medellín
         else:
-            city = 'Bucaramanga'
+            city = 2 # Bucaramanga
+
         return {
             "input": self.image_transforms(image),
             "metadata": metadata,

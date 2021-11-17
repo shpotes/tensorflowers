@@ -131,6 +131,5 @@ class TFColDataModule(pl.LightningDataModule):
         return data.DataLoader(
             self.test_dataset,
             batch_size=self.batch_size,
-            pin_memory=True,
             num_workers=self.num_workers,
         )

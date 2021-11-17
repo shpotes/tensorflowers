@@ -1,7 +1,7 @@
 from typing import Any, Dict, Union, Optional, Tuple
-import gc
 
 import torch
+import torch.nn.functional as F
 import datasets
 import timm
 import torch.nn as nn
@@ -10,7 +10,6 @@ from torchvision import transforms
 from tqdm import tqdm
 
 from src.dataset import TFColDataModule
-from src.evaluation import CrossEntropyMetric
 from src.model import HydraModule
 
 _INFO = datasets.load_dataset_builder("shpotes/tfcol").info
@@ -59,23 +58,26 @@ def memory_contraint_full_inference(
   if with_targets:
     output_dict["targets"] = []
 
-  for batch in tqdm(dloader):
-    latent_tensor = batch["input"].to(device)
+  with torch.no_grad():
+    for batch in dloader:
+      cpu_tensor = batch["input"]
 
-    model = model.eval().to(device)
+      for layer in model.children():
+        layer.cuda()
 
-    for layer in model.children():
-      latent_tensor = layer(latent_tensor)
-      del layer
+        gpu_tensor = cpu_tensor.cuda()
+        gpu_tensor = layer(gpu_tensor)
+        cpu_tensor = gpu_tensor.cpu()
 
-      if WITH_CUDA:
+        layer.cpu()
+        
+        del gpu_tensor
         torch.cuda.empty_cache()
 
-    output_dict["logits"].append(latent_tensor.cpu())
-    if with_targets:
-      output_dict["target"].append(batch["target"])
+      output_dict["logits"].append(cpu_tensor)
+      if with_targets:
+        output_dict["target"].append(batch["target"])
     
-    gc.enable()
   
   return {k: torch.cat(v) for k, v in output_dict.items()}
 
@@ -92,7 +94,7 @@ def prepare_submission(
       )
     ]),
   batch_size=700,
-):
+) -> torch.Tensor:
   model = load_model_for_inference(backbone, ckpt_path)
   dm = TFColDataModule(batch_size=batch_size, image_transforms=image_transforms)
   dm.setup()
@@ -104,5 +106,7 @@ def prepare_submission(
     device=device
   )
 
-  return output_dict["logits"]
+  logits = output_dict["logits"]
+  probs = logits.softmax(axis=1)
 
+  return probs

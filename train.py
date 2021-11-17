@@ -7,7 +7,7 @@ from torchvision import transforms
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.callbacks import ModelCheckpoint
 from src.dataset import TFColDataModule
-from src.models.pl_module import HydraModule
+from src.model.pl_module import HydraModule
 from src.utils.training_utils import turn_off_bn
 
 def train(checkpoint_dir):

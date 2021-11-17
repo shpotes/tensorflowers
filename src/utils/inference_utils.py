@@ -11,7 +11,7 @@ from tqdm import tqdm
 
 from src.dataset import TFColDataModule
 from src.evaluation import CrossEntropyMetric
-from src.models import HydraModule
+from src.model import HydraModule
 
 _INFO = datasets.load_dataset_builder("shpotes/tfcol").info
 _CLASS_NAMES = _INFO.features["labels"].feature.names

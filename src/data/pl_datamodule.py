@@ -69,15 +69,19 @@ class TFColDataModule(pl.LightningDataModule):
     def __init__(
         self, 
         batch_size=32,
-        image_transforms=ToTensor(),
-        target_transforms=to_one_hot_encoding,
+        image_train_transforms=ToTensor(),
+        target_train_transforms=to_one_hot_encoding,
+        image_eval_transforms=ToTensor(),
+        target_eval_transforms=to_one_hot_encoding,
         features_preprocessing=lambda x: x,
         num_workers=2,
     ):
         super().__init__()
         self.batch_size = batch_size
-        self.image_transforms = image_transforms
-        self.target_transforms = target_transforms
+        self.image_train_transforms = image_train_transforms
+        self.target_train_transforms = target_train_transforms
+        self.image_eval_transforms = image_eval_transforms
+        self.target_eval_transforms = target_eval_transforms
         self.features_preprocessing = features_preprocessing
         self.num_workers = num_workers
 
@@ -87,26 +91,19 @@ class TFColDataModule(pl.LightningDataModule):
     def setup(self, stage=None):
         self.train_dataset = TFColDataset(
             'train', 
-            self.image_transforms, 
-            self.target_transforms
+            self.image_train_transforms, 
+            self.target_train_transforms
         )
 
         self.val_dataset = TFColDataset(
             'validation', 
-            self.image_transforms, 
-            self.target_transforms
+            self.image_eval_transforms, 
+            self.target_eval_transforms
         )
 
         self.test_dataset = TFColDataset(
             split="test",
-            image_transforms=Compose([
-                Resize((224, 224)),
-                ToTensor(),
-                Normalize(
-                    mean=[0.485, 0.456, 0.406],
-                    std=[0.229, 0.224, 0.225]
-                )
-            ]),
+            image_transforms=self.image_eval_transforms,
             target_transforms=None
         )
 

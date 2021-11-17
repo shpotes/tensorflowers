@@ -8,8 +8,10 @@ def _rand_aug_dict_to_config_str(hparams: Dict[str, Union[int, str]]) -> str:
     if "inc" in hparams and hparams["inc"]:
         increasing = True
         del hparams["inc"]
+    else: 
+        increasing = False
 
-    config_str = ""
+    config_str = "rand-"
     for k, v in hparams.items():
         config_str += "{k}{v}-"
     

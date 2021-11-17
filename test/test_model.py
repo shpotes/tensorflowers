@@ -3,7 +3,7 @@ import torch.nn as nn
 import pytorch_lightning as pl
 
 from src.dataset.pl_datamodule import DummyDataset
-from src.models import HydraModule
+from src.model import HydraModule
 
 def test_forward_pass():
     simplest_backbone = nn.Sequential(

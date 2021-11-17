@@ -6,7 +6,7 @@ import torch.nn as nn
 import pytorch_lightning as pl 
 
 from einops import rearrange
-from src.evaluation.pytorch import CrossEntropyMetric
+from src.evaluation import CrossEntropyMetric
 from src.loss.cross_entropy import SparseCrossEntropyLoss
 
 def _get_latent_size(backbone: nn.Module, input_size: torch.Tensor) -> int:

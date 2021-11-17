@@ -49,6 +49,22 @@ class TFColDataset(data.Dataset):
             "city": city
         }
 
+class DummyDataset(data.Dataset):
+    def __init__(self, input_shape=(1, 3, 224, 224), size=1000):
+        self.input_shape = input_shape
+        self.size = size
+    
+    def __len__(self):
+        return self.size
+    
+    def __getitem__(self, _):
+        return {
+            "input": torch.randn(*self.input_shape),
+            "metadata": {"lat": 0, "lon": 0},
+            "target": to_one_hot_encoding([0, 1]),
+            "city": 0,
+        }
+
 class TFColDataModule(pl.LightningDataModule):
     def __init__(
         self, 

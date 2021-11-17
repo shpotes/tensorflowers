@@ -4,14 +4,13 @@ from torchvision import transforms as T
 from timm.data import rand_augment_transform, RandomResizedCropAndInterpolation
 from timm.data.constants import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 
-
 def _rand_aug_dict_to_config_str(hparams: Dict[str, Union[int, str]]) -> str:
     if "inc" in hparams and hparams["inc"]:
         increasing = True
         del hparams["inc"]
 
     config_str = ""
-    for k, v in hparams:
+    for k, v in hparams.items():
         config_str += "{k}{v}-"
     
     if increasing:

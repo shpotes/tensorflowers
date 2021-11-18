@@ -1,4 +1,5 @@
 from typing import Callable, Tuple, Optional
+from datasets.features import Value
 
 import timm.loss
 import torch
@@ -25,6 +26,7 @@ class HydraModule(pl.LightningModule):
         clf_loss: str = "bce",
         input_size: Tuple[int] = (1, 3, 224, 224),
         class_weight: Optional[torch.Tensor] = None,
+        with_mixup: bool = False
     ):
         super().__init__()
 
@@ -44,6 +46,10 @@ class HydraModule(pl.LightningModule):
         )
 
         self.city_criterion = nn.CrossEntropyLoss()
+
+        if with_mixup:
+            assert clf_loss == "bce", ValueError("Oopsy we only support mixup with BCELoss")
+            self.clf_criterion = timm.loss.BinaryCrossEntropy()
 
         if clf_loss == "bce":
             self.clf_criterion = nn.BCEWithLogitsLoss(weight=class_weight)
@@ -129,7 +135,9 @@ class HydraModule(pl.LightningModule):
 
         city_loss = output_dir["city_loss"]
         clf_loss = output_dir["clf_loss"]
-        loss = city_loss + self.clf_weight(batch_id) * clf_loss
+
+        lamb = self.clf_weight(batch_id)
+        loss = (city_loss + lamb * clf_loss) / (lamb + 1)
 
         val_cross_entropy = self.val_metric(output_dir["clf_logits"], batch["target"].float())
 

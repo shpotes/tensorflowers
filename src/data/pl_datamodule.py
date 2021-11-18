@@ -4,6 +4,7 @@ from torch.utils import data
 import torch
 from torchvision.transforms import Compose, Resize, Normalize, ToTensor
 from PIL import Image
+from timm.data import FastCollateMixup
 
 def to_one_hot_encoding(label, max_classes=20):
     one_hot = torch.zeros(max_classes)
@@ -73,8 +74,15 @@ class TFColDataModule(pl.LightningDataModule):
         target_train_transforms=to_one_hot_encoding,
         image_eval_transforms=ToTensor(),
         target_eval_transforms=to_one_hot_encoding,
-        features_preprocessing=lambda x: x,
         num_workers=2,
+        with_mixup=False,
+        mixup_alpha=0.1,
+        cutmix_alpha=1.0,
+        cutmix_minmax=0.5,
+        prob=1.0,
+        switch_prob=0.5,
+        mode="batch",
+        label_smoothing=0,
     ):
         super().__init__()
         self.batch_size = batch_size
@@ -82,8 +90,19 @@ class TFColDataModule(pl.LightningDataModule):
         self.target_train_transforms = target_train_transforms
         self.image_eval_transforms = image_eval_transforms
         self.target_eval_transforms = target_eval_transforms
-        self.features_preprocessing = features_preprocessing
         self.num_workers = num_workers
+
+        if with_mixup:
+            self.collate_fn = FastCollateMixup(
+                mixup_alpha=mixup_alpha,
+                cutmix_alpha=cutmix_alpha,
+                cutmix_minmax=cutmix_minmax,
+                prob=prob,
+                switch_prob=switch_prob,
+                mode=mode,
+                label_smoothing=label_smoothing,
+                num_classes=20,
+            )
 
     def prepare_data(self):
         load_dataset('shpotes/tfcol')

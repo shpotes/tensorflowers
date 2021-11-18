@@ -8,7 +8,7 @@ import pytorch_lightning as pl
 
 from einops import rearrange
 from src.evaluation import CrossEntropyMetric
-from src.loss.cross_entropy import SparseCrossEntropyLoss
+from src.loss import SparseCrossEntropyLoss, BinaryCrossEntropy
 
 def _get_latent_size(backbone: nn.Module, input_size: torch.Tensor) -> int:
     batch_size = input_size[0]
@@ -49,7 +49,7 @@ class HydraModule(pl.LightningModule):
 
         if with_mixup:
             assert clf_loss == "bce", ValueError("Oopsy we only support mixup with BCELoss")
-            self.clf_criterion = timm.loss.BinaryCrossEntropy()
+            self.clf_criterion = BinaryCrossEntropy()
 
         if clf_loss == "bce":
             self.clf_criterion = nn.BCEWithLogitsLoss(weight=class_weight)

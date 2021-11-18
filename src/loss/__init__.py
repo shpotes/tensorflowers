@@ -1,1 +1,2 @@
 from .cross_entropy import SparseCrossEntropyLoss
+from .binary_cross_entropy import BinaryCrossEntropy

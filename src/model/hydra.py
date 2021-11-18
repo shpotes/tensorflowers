@@ -2,6 +2,7 @@ from typing import Callable, Tuple, Optional
 from datasets.features import Value
 
 import timm.loss
+import timm.scheduler
 import torch
 import torch.nn as nn
 import pytorch_lightning as pl 
@@ -26,11 +27,15 @@ class HydraModule(pl.LightningModule):
         clf_loss: str = "bce",
         input_size: Tuple[int] = (1, 3, 224, 224),
         class_weight: Optional[torch.Tensor] = None,
-        with_mixup: bool = False
+        with_mixup: bool = False,
+        num_epochs: int = 35,
+        warmup_lr: int = 5,
     ):
         super().__init__()
 
         self.lr = lr
+        self.num_epochs = num_epochs
+        self.warmup_lr = warmup_lr
         latent_size = _get_latent_size(backbone, input_size)
 
         self.train_metric = CrossEntropyMetric()
@@ -157,8 +162,23 @@ class HydraModule(pl.LightningModule):
         params = list(self.parameters())
         trainable_params = list(filter(lambda p: p.requires_grad, params))
 
-        optimizer = self._optimizer_fn(trainable_params)
-        return optimizer
+        optimizer = torch.optim.SGD(
+            trainable_params,
+            lr=self.lr,
+            momentum=0.9,
+            weight_decay=1e-4,
+        )
+
+        decay = {
+            "scheduler": timm.scheduler.CosineLRScheduler(
+                optimizer,
+                t_initial=self.num_epochs,
+                warmup_lr_init=self.warmup_lr
+            ),
+            "monitor": "val_cross_entropy_loss"
+        }
+
+        return optimizer, decay
 
 
         

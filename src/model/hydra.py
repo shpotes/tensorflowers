@@ -68,6 +68,8 @@ class HydraModule(pl.LightningModule):
             nn.Linear(32, 3),
         )
 
+        self._optimizer_fn = lambda params: torch.optim.Adam(params, lr=lr)
+
     def forward(self, x):
         latent = self.feature_extraction(x)
         latent = rearrange(latent, "b ... -> b (...)")
@@ -155,7 +157,7 @@ class HydraModule(pl.LightningModule):
         params = list(self.parameters())
         trainable_params = list(filter(lambda p: p.requires_grad, params))
 
-        optimizer = torch.optim.Adam(trainable_params, lr=self.lr)
+        optimizer = self._optimizer_fn(trainable_params)
         return optimizer
 
 

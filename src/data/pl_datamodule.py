@@ -78,7 +78,6 @@ class TFColDataModule(pl.LightningDataModule):
         with_mixup=False,
         mixup_alpha=0.1,
         cutmix_alpha=1.0,
-        cutmix_minmax=0.5,
         prob=1.0,
         switch_prob=0.5,
         mode="batch",
@@ -96,7 +95,7 @@ class TFColDataModule(pl.LightningDataModule):
             self.collate_fn = FastCollateMixup(
                 mixup_alpha=mixup_alpha,
                 cutmix_alpha=cutmix_alpha,
-                cutmix_minmax=cutmix_minmax,
+                cutmix_minmax=None,
                 prob=prob,
                 switch_prob=switch_prob,
                 mode=mode,

@@ -10,6 +10,7 @@ import pytorch_lightning as pl
 from einops import rearrange
 from src.evaluation import CrossEntropyMetric
 from src.loss import SparseCrossEntropyLoss, BinaryCrossEntropy
+from src.data.mixup import CustomMixup
 
 def _get_latent_size(backbone: nn.Module, input_size: torch.Tensor) -> int:
     batch_size = input_size[0]
@@ -27,9 +28,15 @@ class HydraModule(pl.LightningModule):
         clf_loss: str = "bce",
         input_size: Tuple[int] = (1, 3, 224, 224),
         class_weight: Optional[torch.Tensor] = None,
-        with_mixup: bool = False,
         num_epochs: int = 35,
         warmup_lr: int = 5,
+        with_mixup: bool = False,
+        mixup_alpha=0.1,
+        cutmix_alpha=1.0,
+        mixup_prob=1.0,
+        mixup_switch_prob=0.5,
+        mode="batch",
+        label_smoothing=0,
     ):
         super().__init__()
 
@@ -52,16 +59,28 @@ class HydraModule(pl.LightningModule):
 
         self.city_criterion = nn.CrossEntropyLoss()
 
-        if with_mixup:
-            assert clf_loss == "bce", ValueError("Oopsy we only support mixup with BCELoss")
-            self.clf_criterion = BinaryCrossEntropy()
-
         if clf_loss == "bce":
-            self.clf_criterion = nn.BCEWithLogitsLoss(weight=class_weight)
+            self.clf_criterion = nn.BCEWithLogitsLoss(pos_weight=class_weight)
         if clf_loss == "asl":
             self.clf_criterion = timm.loss.AsymmetricLossMultiLabel()
         if clf_loss == "ce":
             self.clf_criterion = SparseCrossEntropyLoss()
+
+        self.mixup_transform = lambda x, _: x
+        if with_mixup:
+            assert clf_loss == "bce", ValueError("Oopsy we only support mixup with BCELoss")
+            self.clf_criterion = BinaryCrossEntropy(pos_weight=class_weight)
+            self.city_criterion = BinaryCrossEntropy()
+
+            self.mixup_transform = CustomMixup(
+                mixup_alpha=mixup_alpha,
+                cutmix_alpha=cutmix_alpha,
+                prob=mixup_prob,
+                switch_prob=mixup_switch_prob,
+                mode=mode,
+                label_smoothing=label_smoothing,
+            )
+
 
         self.clf_weight = clf_weight
 
@@ -93,6 +112,9 @@ class HydraModule(pl.LightningModule):
         DDDDD 
               -> xxx -> [0, 1, 0, ..., 1]
         """
+
+        batch = self.mixup_transform(batch, self.device)
+
         img = batch["input"]
         clf_targets = batch["target"]
         city_targets = batch["city"]

@@ -2,7 +2,7 @@ import torch
 from timm.data.mixup import Mixup
 
 def one_hot(x, num_classes, on_value=1., off_value=0., device=None):
-    if x.size(1) == num_classes:
+    if x.size(-1) == num_classes:
         out = torch.where(x == 1, on_value, off_value)
     else:  
         x = x.long().view(-1, 1)

@@ -2,10 +2,10 @@ import torch
 from timm.data.mixup import Mixup
 
 def one_hot(x, num_classes, on_value=1., off_value=0., device=None):
-    x = x.long().view(-1, 1)
     if x.size(1) == num_classes:
         out = torch.where(x == 1, on_value, off_value)
     else:  
+        x = x.long().view(-1, 1)
         out = torch.full((x.size()[0], num_classes), off_value, device=device).scatter_(1, x, on_value)
     return out
 

@@ -31,10 +31,10 @@ class HydraModule(pl.LightningModule):
         num_epochs: int = 35,
         warmup_lr: int = 5,
         with_mixup: bool = False,
-        mixup_alpha=0.1,
-        cutmix_alpha=1.0,
+        mixup_alpha=1,
+        cutmix_alpha=0.0,
         mixup_prob=1.0,
-        mixup_switch_prob=0.5,
+        mixup_switch_prob=0.0,
         mode="batch",
         label_smoothing=0,
     ):
@@ -66,8 +66,9 @@ class HydraModule(pl.LightningModule):
         if clf_loss == "ce":
             self.clf_criterion = SparseCrossEntropyLoss()
 
+        self.with_mixup = with_mixup
         self.mixup_transform = lambda x, _: x
-        if with_mixup:
+        if self.with_mixup:
             assert clf_loss == "bce", ValueError("Oopsy we only support mixup with BCELoss")
             self.clf_criterion = BinaryCrossEntropy(pos_weight=class_weight)
             self.city_criterion = BinaryCrossEntropy()
@@ -118,13 +119,15 @@ class HydraModule(pl.LightningModule):
         img = batch["input"]
         clf_targets = batch["target"]
         city_targets = batch["city"]
+        city_targets = city_targets.float() if self.with_mixup else city_targets.long()
 
         forward_dict = self(img)
         clf_logits = forward_dict["clf"]
         city_logits = forward_dict["city"]
 
         clf_loss = self.clf_criterion(clf_logits, clf_targets.float())
-        city_loss = self.city_criterion(city_logits, city_targets.long())
+        city_loss = self.city_criterion(city_logits, city_targets)
+        
 
         output_dict = {
             "city_loss": city_loss,

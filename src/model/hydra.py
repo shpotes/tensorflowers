@@ -184,23 +184,12 @@ class HydraModule(pl.LightningModule):
         params = list(self.parameters())
         trainable_params = list(filter(lambda p: p.requires_grad, params))
 
-        optimizer = torch.optim.SGD(
+        optimizer = torch.optim.Adam(
             trainable_params,
             lr=self.lr,
-            momentum=0.9,
-            weight_decay=1e-4,
         )
 
-        decay = {
-            "scheduler": timm.scheduler.CosineLRScheduler(
-                optimizer,
-                t_initial=self.num_epochs,
-                warmup_lr_init=self.warmup_lr
-            ),
-            "monitor": "val_cross_entropy_loss"
-        }
-
-        return optimizer, decay
+        return optimizer
 
 
         

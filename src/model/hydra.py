@@ -16,6 +16,8 @@ def _get_latent_size(backbone: nn.Module, input_size: torch.Tensor, pool_latent:
     
     if not pool_latent:
         output_tensor = output_tensor.reshape(batch_size, -1)
+    else:
+        output_tensor = output_tensor.permute(0, 2, 1) # An small hack to get the correct shape
     
     return output_tensor.size(1)
 

@@ -9,10 +9,13 @@ from einops import rearrange
 from src.evaluation import CrossEntropyMetric
 from src.loss.cross_entropy import SparseCrossEntropyLoss
 
-def _get_latent_size(backbone: nn.Module, input_size: torch.Tensor) -> int:
+def _get_latent_size(backbone: nn.Module, input_size: torch.Tensor, pool_latent: bool) -> int:
     batch_size = input_size[0]
     input_tensor = torch.zeros(*input_size)
-    output_tensor = backbone(input_tensor).reshape(batch_size, -1)
+    output_tensor = backbone(input_tensor)
+    
+    if not pool_latent:
+        output_tensor = output_tensor.reshape(batch_size, -1)
     
     return output_tensor.size(1)
 
@@ -31,7 +34,7 @@ class HydraModule(pl.LightningModule):
 
         self.lr = lr
         self.pool_latent = pool_latent
-        latent_size = _get_latent_size(backbone, input_size)
+        latent_size = _get_latent_size(backbone, input_size, self.pool_latent)
 
         self.train_metric = CrossEntropyMetric()
         self.val_metric = CrossEntropyMetric()

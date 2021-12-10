@@ -25,10 +25,12 @@ class HydraModule(pl.LightningModule):
         clf_loss: str = "bce",
         input_size: Tuple[int] = (1, 3, 224, 224),
         class_weight: Optional[torch.Tensor] = None,
+        pool_latent: bool = False,
     ):
         super().__init__()
 
         self.lr = lr
+        self.pool_latent = pool_latent
         latent_size = _get_latent_size(backbone, input_size)
 
         self.train_metric = CrossEntropyMetric()
@@ -64,7 +66,10 @@ class HydraModule(pl.LightningModule):
 
     def forward(self, x):
         latent = self.feature_extraction(x)
-        latent = rearrange(latent, "b ... -> b (...)")
+        if self.pool_latent:
+            latent = torch.mean(latent, dim=1)
+        else:
+            latent = rearrange(latent, "b ... -> b (...)")
 
         clf_logits = self.classification_head(latent)
         city_logits = self.city_head(latent)

@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 from tqdm import tqdm
 
-from src.dataset import TFColDataModule
+from src.data import TFColDataModule
 from src.model import HydraModule
 
 _INFO = datasets.load_dataset_builder("shpotes/tfcol").info
